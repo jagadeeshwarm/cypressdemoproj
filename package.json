@@ -1,6 +1,10 @@
 {
   "devDependencies": {
-    "cypress": "^14.0.2",
+    "cypress": "^14.1.0",
     "cypress-iframe": "^1.0.1"
+  },
+  "dependencies": {
+    "cypress-real-events": "^1.14.0",
+    "pdf-parse": "^1.1.1"
   }
 }

@@ -1,64 +1,76 @@
 import selectors from "../../support/selectors"
 import { login } from "../../support/BPS_Login"
+import HomePage from "../../support/pageObjects/homePage"
+import UnifiedModel from "../../support/pageObjects/unifiedApi"
+import unifiedApi from "../../support/pageObjects/unifiedApi"
+import PdfPage from "../../support/pageObjects/pdf"
 
 
-
-describe('project Creation', function () {
+describe('Acoustic Product Creation', function () {
     beforeEach(function () {
 
         // Load credentials from fixtures before each test
         cy.fixture('credentials').then((data) => {
-            this.credentials = data;
+            this.data = data;
+            this.homePage = new HomePage()
+            cy.viewport(1920, 1080);
+
+
         })
 
     })
 
-    it('My FirstTest case', function () {
-        login();
+    it('Acoustic Product Creation with Triple glass', function () {
 
-        cy.generateProjectName().then((projectName) => {
-            cy.wrap(projectName).as('projectName') //here wrap is written so that project name can be used in further steps
-            cy.get(selectors.projectCreationPage.projectInput).type(projectName);
-            cy.log('Generated Project Name:', projectName);
-        })
-        //uncomment when the scenario is ready and remove project search and related code
-        // cy.get(selectors.projectCreationPage.locationInput).type('Hyderbad');
-        // cy.get(selectors.projectCreationPage.suggestionList).first().click();
-        // cy.get(selectors.projectCreationPage.createButton).click();
-        cy.get(selectors.projectCreationPage.projectSearch).type('PY_cytest_d7kvw');
-        cy.get(selectors.projectCreationPage.projectRow).click();
-        cy.get(selectors.projectCreationPage.configuration1_Button).dblclick();
-        cy.get(selectors.problemConfigurePage.physicsType_Acoustic).click();
-        cy.get(selectors.problemConfigurePage.productType_Window).click();
-        cy.get(selectors.problemConfigurePage.operabilityExpand_Button).click();
-        cy.get(selectors.problemConfigurePage.operabilityAdd_button).click();
-        cy.get(selectors.operabilityType.inward_Select).should('be.visible').click();
-        cy.get(selectors.operabilityType.turnTiltButton).click();
-        cy.clickOnCanvas(453, 411);
-        cy.get(selectors.operabilityType.applyButton).click();
-        cy.get(selectors.framing.expandButton).click();
-        cy.get(selectors.framing.outerframeLibraryButton).click();
-        cy.get(selectors.framing.article382120).click();
-        cy.get(selectors.framing.outerFrameConfirmButton).click();
-        cy.get(selectors.framing.ventFrameLibraryButton).click();
-        cy.get(selectors.framing.ventFrameArticle).click();
-        cy.get(selectors.framing.ventFrameConfirmButton).click();
-        cy.get(selectors.glasspanel.gpExpandButton).click();
-        cy.get(selectors.glasspanel.gpLibraryButton).click();
-        cy.get(selectors.glasspanel.gpTripleGlass).click();
-        cy.get(selectors.glasspanel.gpGlassDim).click();
-        cy.get(selectors.glasspanel.gpConfirmButton).scrollIntoView().should('be.visible').click();
+        const { username, password } = this.data;
+        console.log('Username:', username);
+        console.log('Password:', password);
+        this.homePage.goToBpsSite()
+        const dashboardPage = this.homePage.login(username, password);
+        cy.wait(4000);
+        dashboardPage.clickFeatureButtonIfExists();
+        dashboardPage.searchProject(this.data.projectName);
+        const problemConfigurePage = dashboardPage.configurationSelect();
+        problemConfigurePage.physicsType_Structural();
+        const operabilityType = problemConfigurePage.productType();
+        const framingType = operabilityType.operabilitySelection();
+        framingType.framingExpand();
+        cy.wait(2000);
+        framingType.awsSystemSelection();
+        framingType.outerframeLibraryBtn();
+
+        framingType.iterateOuterframeFramingOptions((selectedOption) => {
+            cy.log(`Starting full test execution for: ${selectedOption}`)
+            cy.trimValue(selectedOption).then((trimmedValue) => {
+                cy.wrap(trimmedValue).as("trimmedOption");
+                cy.log(`Extracted value: ${trimmedValue}`);
+            })
+                const gpType = framingType.VentFrameSelection();
+
+                const accousticSection = gpType.gpSelection(this.data.gpBlockInputValue);
+                // accousticSection.accousticLibrary();
+                //accousticSection.accousticCodeSelection(this.data.standardSelection);
+                cy.wait(5000);
+                const reportTab = accousticSection.computeConfirm();
+                unifiedApi.interceptApiRequest();
+                unifiedApi.getProjectNameFromPayload();
+                reportTab.reportLink();
+                cy.get("@trimmedOption").then((articleName) => {
+                    PdfPage.pdfViewer(articleName); // Pass trimmed value dynamically
+                });
+                PdfPage.navigateToConfigurPage();
+                framingType.framingExpand();
+                framingType.outerframeLibraryBtn();
+
+                cy.log(`Test execution completed for: ${selectedOption}`);
 
 
 
 
+            });
 
-
-
-
-
-
+        });
 
     })
 
-})
+

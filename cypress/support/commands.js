@@ -30,13 +30,31 @@ Cypress.Commands.add('generateProjectName', () => {
     return `PY_cytest_${Math.random().toString(36).slice(2, 7)}`;
   });
 
-  Cypress.Commands.add('clickOnCanvas', (x, y) => {
-    cy.get(selectors.iframe.iframeSelection).its('0.contentDocument.body')
-        .should('be.visible')
-        .then(cy.wrap)
-        .find('canvas')
-        .click(x, y);
+  Cypress.Commands.add('clickCanvasCenter', (iframeSelector, canvasSelector) => {
+    cy.get(iframeSelector).then(($iframe) => {
+      const doc = $iframe.contents().find('body');
+  
+      cy.wrap(doc)
+        .find(canvasSelector)
+        .should('be.visible') // Ensure the canvas is loaded
+        .then(($canvas) => {
+          const width = $canvas.width();
+          const height = $canvas.height();
+          const centerX = width / 2;
+          const centerY = height / 2;
+  
+          cy.wrap($canvas).click(centerX, centerY);
+        });
+    });
+  });
+  
+  Cypress.Commands.add("trimValue", (selectedOption) => {
+    return cy.wrap(selectedOption.trim().split(/\s+/)[0]);  
 });
+
+
+
+
 
 
   
